@@ -1,34 +1,34 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class PlayerMovement : MonoBehaviour
 {
     [Header("Move")]
     [SerializeField] private float walkSpeed = 4.5f;
-    //[SerializeField] private float sprintSpeed = 7.0f;
+    [SerializeField] private float sprintSpeed = 7.0f;
     [SerializeField] private float rotationSpeed = 12f;
 
     [Header("Gravity")]
     [SerializeField] private float gravity = -25f;
 
+    [Header("Block Axis")]
+    [SerializeField] private bool lockWorldZ = true;
+
     private CharacterController controller;
 
-    private PlayerController owner;
     private Transform cameraTransform;
 
     private Vector2 moveInput;
-    //private bool sprintHeld;
+    private bool sprintHeld;
 
     private Vector3 velocity;
+
+    private float lockedZ;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
-    }
-
-    public void SetController(PlayerController controllerOwner)
-    {
-        owner = controllerOwner;
+        lockedZ = transform.position.z;
     }
 
     public void SetCameraTransform(Transform cam)
@@ -41,16 +41,21 @@ public sealed class PlayerMovement : MonoBehaviour
         moveInput = move;
     }
 
-    //public void SetSprintHeld(bool held)
-    //{
-    //    sprintHeld = held;
-    //}
+    public void SetSprintHeld(bool held)
+    {
+        sprintHeld = held;
+    }
 
     private void Update()
     {
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
-        //float speed = sprintHeld ? sprintSpeed : walkSpeed;
-        float speed = walkSpeed;
+        float speed = sprintHeld ? sprintSpeed : walkSpeed;
+
+        if (lockWorldZ)
+        {
+            moveDir.z = 0f;
+            moveDir = moveDir.sqrMagnitude > 0.0001f ? moveDir.normalized : Vector3.zero;
+        }
 
         if (moveDir.sqrMagnitude > 0.0001f)
         {
@@ -61,6 +66,13 @@ public sealed class PlayerMovement : MonoBehaviour
         }
 
         ApplyGravity();
+
+        if (lockWorldZ)
+        {
+            Vector3 p = transform.position;
+            p.z = lockedZ;
+            transform.position = p;
+        }
     }
 
     private Vector3 GetCameraRelativeDirection(Vector2 move)
