@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 594113430b5267f45a88dbd3c3a1fab9, type: 3}
+  m_Name: Mask_
+  m_EditorClassIdentifier: Assembly-CSharp::MaskDefinition
+  id: 0
+  displayName: ball
+  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  visualPrefab: {fileID: 8193141258266366278, guid: 237500c8fa961944cb075a0617d3eb25, type: 3}
+  speedMultiplier: 1
+  gravityMultiplier: 1
+  colliderMode: 0
+  controllerRadius: 0.5
+  controllerHeight: 0.5
+  controllerCenter: {x: 0, y: 1, z: 0}
+  colliderPrefab: {fileID: 0}
+  enableBounce: 1
+  enableAerialDash: 0
+  enableWallStick: 0
+  enableSmash: 0
+  equipSfx: {fileID: 0}
+  equipVfxPrefab: {fileID: 0}

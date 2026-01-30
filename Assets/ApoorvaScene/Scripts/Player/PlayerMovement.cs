@@ -24,6 +24,8 @@ public sealed class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
 
     private float lockedZ;
+    private float speedMultiplier = 1f;
+    private float gravityMultiplier = 1f;
 
     private void Awake()
     {
@@ -46,10 +48,21 @@ public sealed class PlayerMovement : MonoBehaviour
         sprintHeld = held;
     }
 
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speedMultiplier = multiplier;
+    }
+
+    public void SetGravityMultiplier(float multiplier)
+    {
+        gravityMultiplier = multiplier;
+    }
+
     private void Update()
     {
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
         float speed = sprintHeld ? sprintSpeed : walkSpeed;
+        speed *= speedMultiplier;
 
         if (lockWorldZ)
         {
@@ -100,7 +113,7 @@ public sealed class PlayerMovement : MonoBehaviour
         if (controller.isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
-        velocity.y += gravity * Time.deltaTime;
+        velocity.y += gravity * gravityMultiplier * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
 }

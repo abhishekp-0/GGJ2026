@@ -233,6 +233,51 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 125516995}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &186005664
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 186005665}
+  - component: {fileID: 186005666}
+  m_Layer: 0
+  m_Name: VisvualRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &186005665
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186005664}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1535017500}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &186005666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186005664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5862819211b285846b7ffc05903f554b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaskVisual
+  visualRoot: {fileID: 186005665}
 --- !u!1 &647602825
 GameObject:
   m_ObjectHideFlags: 0
@@ -495,6 +540,8 @@ GameObject:
   - component: {fileID: 1535017502}
   - component: {fileID: 1535017501}
   - component: {fileID: 1535017504}
+  - component: {fileID: 1535017506}
+  - component: {fileID: 1535017505}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -516,6 +563,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 125516996}
+  - {fileID: 186005665}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1535017501
@@ -531,8 +579,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   walkSpeed: 4.5
+  sprintSpeed: 7
   rotationSpeed: 12
   gravity: -25
+  lockWorldZ: 1
 --- !u!143 &1535017502
 CharacterController:
   m_ObjectHideFlags: 0
@@ -590,7 +640,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   input: {fileID: 1535017503}
   movement: {fileID: 1535017501}
+  masks: {fileID: 1535017506}
   cameraTransform: {fileID: 1389881854}
+--- !u!114 &1535017505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535017499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1a1fbf7b5f5ca944825b76d27054ed2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaskColliderApplier
+  colliderRoot: {fileID: 1535017500}
+--- !u!114 &1535017506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535017499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51e457a04f5efcf409d19ecbcdb72789, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaskController
+  library: {fileID: 11400000, guid: 9a4fdd03fd0301549896d36f9b3b02c1, type: 2}
+  startMaskIndex: 0
+  visual: {fileID: 186005666}
+  colliderApplier: {fileID: 1535017505}
+  movement: {fileID: 1535017501}
+  capsule: {fileID: 125516995}
+  unlockedCount: 1
+  equipOnStart: 0
 --- !u!1 &1601472617
 GameObject:
   m_ObjectHideFlags: 0
