@@ -19,6 +19,7 @@ public sealed class InputReader : MonoBehaviour
 
     public event Action Interact;
     public event Action JumpPressed;
+    public event Action JumpReleased;
     public event Action<bool> SprintChanged;
 
     private InputActionMap map;
@@ -49,7 +50,14 @@ public sealed class InputReader : MonoBehaviour
             interactAction.performed += OnInteract;
 
         if (jumpAction != null)
+        {
             jumpAction.performed += OnJump;
+            jumpAction.canceled += OnJumpCanceled;
+        }
+        else
+        {
+            Debug.LogWarning($"[InputReader] Jump action '{jumpActionName}' not found in map '{actionMapName}'");
+        }
 
         if (sprintAction != null)
         {
@@ -80,7 +88,10 @@ public sealed class InputReader : MonoBehaviour
             interactAction.performed -= OnInteract;
 
         if (jumpAction != null)
+        {
             jumpAction.performed -= OnJump;
+            jumpAction.canceled -= OnJumpCanceled;
+        }
 
         if (sprintAction != null)
         {
@@ -101,7 +112,14 @@ public sealed class InputReader : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext ctx)
     {
+        Debug.Log($"[InputReader] Jump PERFORMED by: {ctx.control?.path}");
         JumpPressed?.Invoke();
+    }
+
+    private void OnJumpCanceled(InputAction.CallbackContext ctx)
+    {
+        Debug.Log($"[InputReader] Jump CANCELED by: {ctx.control?.path}");
+        JumpReleased?.Invoke();
     }
 
     private void OnSprint(InputAction.CallbackContext ctx)

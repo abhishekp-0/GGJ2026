@@ -53,4 +53,33 @@ public sealed class MaskDefinition : ScriptableObject
     [Header("SFX/VFX (Optional)")]
     public AudioClip equipSfx;
     public GameObject equipVfxPrefab;
+
+    [Header("Jump Profile")]
+    public JumpProfile jump = new JumpProfile
+    {
+        jumpHeight = 1.5f,
+        coyoteTime = 0.15f,
+        jumpBufferTime = 0.1f,
+        fallGravityMultiplier = 1.5f,
+        lowJumpGravityMultiplier = 2f,
+        enableLandingBounce = false,
+        bounceMinFallSpeed = 5f,
+        bounceVelocity = 10f
+    };
+
+    [System.Serializable]
+    public struct JumpProfile
+    {
+        [Header("Jump")]
+        public float jumpHeight;              // meters
+        public float coyoteTime;              // seconds
+        public float jumpBufferTime;          // seconds
+        public float fallGravityMultiplier;   // >1 = snappier fall
+        public float lowJumpGravityMultiplier;// >1 = short hop when jump released
+
+        [Header("Ball Bounce (Optional Passive)")]
+        public bool enableLandingBounce;
+        public float bounceMinFallSpeed;      // if falling faster than this, bounce
+        public float bounceVelocity;          // upward velocity after bounce
+    }
 }

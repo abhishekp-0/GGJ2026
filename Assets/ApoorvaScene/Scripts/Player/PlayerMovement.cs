@@ -11,58 +11,87 @@ public sealed class PlayerMovement : MonoBehaviour
     [Header("Gravity")]
     [SerializeField] private float gravity = -25f;
 
+    [Header("Jump Base")]
+    [SerializeField] private float baseGravityMagnitude = 25f; // must be positive for math
+    [SerializeField] private JumpStrategy_ConfigSO jumpStrategy;
+
+    [Header("Default Jump Profile (Fallback)")]
+    [SerializeField] private MaskDefinition.JumpProfile defaultJumpProfile;
+
     [Header("Block Axis")]
     [SerializeField] private bool lockWorldZ = true;
 
     private CharacterController controller;
-
     private Transform cameraTransform;
 
     private Vector2 moveInput;
     private bool sprintHeld;
 
     private Vector3 velocity;
-
     private float lockedZ;
+
     private float speedMultiplier = 1f;
     private float gravityMultiplier = 1f;
+
+    private float coyoteTimer;
+    private float jumpBufferTimer;
+
+    private bool jumpHeld;
+    private float lastFallSpeedAbs;
+    private bool wasGrounded;
+
+    // ✅ Current jump data comes from the equipped mask
+    private MaskDefinition.JumpProfile currentJumpProfile;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         lockedZ = transform.position.z;
+        wasGrounded = controller.isGrounded;
+
+        // fallback so jump works even before first mask is applied
+        currentJumpProfile = defaultJumpProfile;
     }
 
-    public void SetCameraTransform(Transform cam)
+    public void SetCameraTransform(Transform cam) => cameraTransform = cam;
+    public void SetMoveInput(Vector2 move) => moveInput = move;
+    public void SetSprintHeld(bool held) => sprintHeld = held;
+
+    public void SetSpeedMultiplier(float multiplier) => speedMultiplier = multiplier;
+    public void SetGravityMultiplier(float multiplier) => gravityMultiplier = multiplier;
+
+    // ✅ Called by MaskController when mask changes
+    public void SetJumpProfile(MaskDefinition.JumpProfile profile)
     {
-        cameraTransform = cam;
+        currentJumpProfile = profile;
     }
 
-    public void SetMoveInput(Vector2 move)
+    public void JumpPressed()
     {
-        moveInput = move;
+        Debug.Log($"[PlayerMovement] JumpPressed() called. Grounded={controller.isGrounded}");
+
+        jumpHeld = true;
+
+        if (jumpStrategy == null)
+        {
+            Debug.LogWarning("[PlayerMovement] jumpStrategy is NULL. Using fallback buffer 0.1s");
+            jumpBufferTimer = 0.1f;
+            return;
+        }
+
+        jumpBufferTimer = jumpStrategy.GetBufferTime(currentJumpProfile);
+        Debug.Log($"[PlayerMovement] jumpBufferTimer set to {jumpBufferTimer:0.000}");
     }
 
-    public void SetSprintHeld(bool held)
+    public void JumpReleased()
     {
-        sprintHeld = held;
-    }
-
-    public void SetSpeedMultiplier(float multiplier)
-    {
-        speedMultiplier = multiplier;
-    }
-
-    public void SetGravityMultiplier(float multiplier)
-    {
-        gravityMultiplier = multiplier;
+        jumpHeld = false;
     }
 
     private void Update()
     {
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
-        float speed = sprintHeld ? sprintSpeed : walkSpeed;
-        speed *= speedMultiplier;
+        float speed = (sprintHeld ? sprintSpeed : walkSpeed) * speedMultiplier;
 
         if (lockWorldZ)
         {
@@ -76,6 +105,31 @@ public sealed class PlayerMovement : MonoBehaviour
 
             Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
+
+        if (jumpBufferTimer > 0f)
+        {
+            Debug.Log($"[PlayerMovement] Jump buffered. grounded={controller.isGrounded} coyoteTimer={coyoteTimer:0.000}");
+        }
+
+
+        // ----- Jump Timers -----
+        float coyote = (jumpStrategy != null) ? jumpStrategy.GetCoyoteTime(currentJumpProfile) : 0.1f;
+
+        if (controller.isGrounded)
+            coyoteTimer = coyote;
+        else
+            coyoteTimer -= Time.deltaTime;
+
+        jumpBufferTimer -= Time.deltaTime;
+
+        // Attempt jump if buffered and allowed
+        if (jumpBufferTimer > 0f && coyoteTimer > 0f)
+        {
+            Debug.Log($"[PlayerMovement] Jump TRIGGERED. buffer={jumpBufferTimer:0.000}, coyote={coyoteTimer:0.000}");
+            DoJump();
+            jumpBufferTimer = 0f;
+            coyoteTimer = 0f;
         }
 
         ApplyGravity();
@@ -108,12 +162,66 @@ public sealed class PlayerMovement : MonoBehaviour
         return worldDir.normalized;
     }
 
+    private void DoJump()
+    {
+        float g = Mathf.Max(0.01f, baseGravityMagnitude);
+
+        float v0 = (jumpStrategy != null)
+            ? jumpStrategy.GetJumpVelocity(currentJumpProfile, g)
+            : Mathf.Sqrt(2f * g * Mathf.Max(0.01f, currentJumpProfile.jumpHeight));
+
+        velocity.y = v0;
+        Debug.Log($"[PlayerMovement] DoJump() -> velocity.y set to {velocity.y:0.00}");
+    }
+
     private void ApplyGravity()
     {
-        if (controller.isGrounded && velocity.y < 0f)
-            velocity.y = -2f;
+        bool grounded = controller.isGrounded;
 
-        velocity.y += gravity * gravityMultiplier * Time.deltaTime;
+        // Detect landing (air -> ground)
+        bool justLanded = grounded && !wasGrounded;
+
+        if (grounded)
+        {
+            if (velocity.y < 0f)
+            {
+                // Only bounce when we JUST landed
+                if (justLanded && jumpStrategy != null &&
+                    jumpStrategy.ShouldBounceOnLanding(currentJumpProfile, lastFallSpeedAbs))
+                {
+                    velocity.y = jumpStrategy.GetBounceVelocity(currentJumpProfile);
+                }
+                else
+                {
+                    velocity.y = -2f; // keep grounded
+                }
+            }
+
+            // Reset fall speed after grounding
+            lastFallSpeedAbs = 0f;
+        }
+        else
+        {
+            // Track falling speed while airborne
+            if (velocity.y < 0f)
+                lastFallSpeedAbs = Mathf.Abs(velocity.y);
+        }
+
+        // Apply gravity with multipliers for platformer feel
+        float g = gravity * gravityMultiplier; // gravity is negative
+        float extraMultiplier = 1f;
+
+        if (!grounded && jumpStrategy != null)
+        {
+            if (velocity.y < 0f)
+                extraMultiplier = jumpStrategy.GetFallMultiplier(currentJumpProfile);
+            else if (!jumpHeld)
+                extraMultiplier = jumpStrategy.GetLowJumpMultiplier(currentJumpProfile);
+        }
+
+        velocity.y += g * extraMultiplier * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+
+        wasGrounded = grounded;
     }
 }

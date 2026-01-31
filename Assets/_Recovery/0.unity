@@ -582,17 +582,6 @@ MonoBehaviour:
   sprintSpeed: 7
   rotationSpeed: 12
   gravity: -25
-  baseGravityMagnitude: 25
-  jumpStrategy: {fileID: 11400000, guid: b18f9a6c9acd3a3428d8e985ee5236a5, type: 2}
-  defaultJumpProfile:
-    jumpHeight: 1.8
-    coyoteTime: 0.15
-    jumpBufferTime: 0.12
-    fallGravityMultiplier: 1.35
-    lowJumpGravityMultiplier: 2.2
-    enableLandingBounce: 1
-    bounceMinFallSpeed: 7.5
-    bounceVelocity: 8
   lockWorldZ: 1
 --- !u!143 &1535017502
 CharacterController:

@@ -29,3 +29,12 @@ MonoBehaviour:
   enableSmash: 0
   equipSfx: {fileID: 0}
   equipVfxPrefab: {fileID: 0}
+  jump:
+    jumpHeight: 2.5
+    coyoteTime: 0.15
+    jumpBufferTime: 0.12
+    fallGravityMultiplier: 1
+    lowJumpGravityMultiplier: 2.4
+    enableLandingBounce: 1
+    bounceMinFallSpeed: 8
+    bounceVelocity: 7

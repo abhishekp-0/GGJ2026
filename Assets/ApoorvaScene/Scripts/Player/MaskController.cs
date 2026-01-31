@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public sealed class MaskController : MonoBehaviour
@@ -66,6 +66,7 @@ public sealed class MaskController : MonoBehaviour
         {
             movement.SetSpeedMultiplier(mask.speedMultiplier);
             movement.SetGravityMultiplier(mask.gravityMultiplier);
+            movement.SetJumpProfile(mask.jump);   // ✅ passive jump behavior changes here
         }
 
         Debug.Log($"Equipped Mask: {mask.displayName} ({mask.id})");
