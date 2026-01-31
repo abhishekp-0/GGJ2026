@@ -231,7 +231,7 @@ GameObject:
   - component: {fileID: 7449852569249835888}
   - component: {fileID: 4442438270498754961}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: SlidingSelector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
