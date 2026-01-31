@@ -67,6 +67,7 @@ public sealed class MaskController : MonoBehaviour
             movement.SetSpeedMultiplier(mask.speedMultiplier);
             movement.SetGravityMultiplier(mask.gravityMultiplier);
             movement.SetJumpProfile(mask.jump);   // ✅ passive jump behavior changes here
+            movement.SetWallStickEnabled(mask.enableWallStick);
         }
 
         Debug.Log($"Equipped Mask: {mask.displayName} ({mask.id})");

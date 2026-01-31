@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 594113430b5267f45a88dbd3c3a1fab9, type: 3}
-  m_Name: Mask_
+  m_Name: Ball
   m_EditorClassIdentifier: Assembly-CSharp::MaskDefinition
   id: 0
   displayName: ball
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  visualPrefab: {fileID: 8193141258266366278, guid: 237500c8fa961944cb075a0617d3eb25, type: 3}
+  visualPrefab: {fileID: 3917198838465641531, guid: 237500c8fa961944cb075a0617d3eb25, type: 3}
   speedMultiplier: 1
   gravityMultiplier: 1
   colliderMode: 0

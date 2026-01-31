@@ -25,20 +25,16 @@ public sealed class PlayerController : MonoBehaviour
     {
         if (input == null || movement == null) return;
 
-        input.JumpPressed += OnJumpPressed;
-        input.JumpReleased += OnJumpReleased;
-
-        Debug.Log("[PlayerController] Subscribed to jump events");
+        input.JumpPressed += movement.JumpPressed;
+        input.JumpReleased += movement.JumpReleased;
     }
 
     private void OnDisable()
     {
         if (input == null || movement == null) return;
 
-        input.JumpPressed -= OnJumpPressed;
-        input.JumpReleased -= OnJumpReleased;
-
-        Debug.Log("[PlayerController] Unsubscribed from jump events");
+        input.JumpPressed -= movement.JumpPressed;
+        input.JumpReleased -= movement.JumpReleased;
     }
 
     private void Update()
@@ -58,17 +54,5 @@ public sealed class PlayerController : MonoBehaviour
         if (Keyboard.current.digit2Key.wasPressedThisFrame) masks.EquipIndex(1);
         if (Keyboard.current.digit3Key.wasPressedThisFrame) masks.EquipIndex(2);
         if (Keyboard.current.digit4Key.wasPressedThisFrame) masks.EquipIndex(3);
-    }
-
-    private void OnJumpPressed()
-    {
-        Debug.Log("[PlayerController] JumpPressed received -> calling PlayerMovement.JumpPressed()");
-        movement.JumpPressed();
-    }
-
-    private void OnJumpReleased()
-    {
-        Debug.Log("[PlayerController] JumpReleased received -> calling PlayerMovement.JumpReleased()");
-        movement.JumpReleased();
     }
 }
