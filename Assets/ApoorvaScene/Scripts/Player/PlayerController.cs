@@ -7,52 +7,43 @@ public sealed class PlayerController : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private InputReader input;
     [SerializeField] private PlayerMovement movement;
-    [SerializeField] private MaskController masks;
 
-    [Header("Optional Camera Ref")]
-    [SerializeField] private Transform cameraTransform;
-
-    private void Awake()
-    {
-        if (movement == null)
-            movement = GetComponent<PlayerMovement>();
-
-        if (movement != null && cameraTransform != null)
-            movement.SetCameraTransform(cameraTransform);
-    }
+    [Header("Debug")]
+    [SerializeField] private bool enableDebugMaskKeys = true;
 
     private void OnEnable()
     {
-        if (input == null || movement == null) return;
-
         input.JumpPressed += movement.JumpPressed;
         input.JumpReleased += movement.JumpReleased;
     }
 
     private void OnDisable()
     {
-        if (input == null || movement == null) return;
-
         input.JumpPressed -= movement.JumpPressed;
         input.JumpReleased -= movement.JumpReleased;
     }
 
     private void Update()
     {
-        if (input == null || movement == null) return;
-
         movement.SetMoveInput(input.MoveValue);
         movement.SetSprintHeld(input.SprintHeld);
-        HandleMaskInput();
+
+        if (enableDebugMaskKeys)
+            HandleMaskDebugInput();
     }
 
-    private void HandleMaskInput()
+    private void HandleMaskDebugInput()
     {
-        if (masks == null) return;
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
+            GameManager.Instance.RequestEquipMask(MaskType.Ball);
 
-        if (Keyboard.current.digit1Key.wasPressedThisFrame) masks.EquipIndex(0);
-        if (Keyboard.current.digit2Key.wasPressedThisFrame) masks.EquipIndex(1);
-        if (Keyboard.current.digit3Key.wasPressedThisFrame) masks.EquipIndex(2);
-        if (Keyboard.current.digit4Key.wasPressedThisFrame) masks.EquipIndex(3);
+        if (Keyboard.current.digit2Key.wasPressedThisFrame)
+            GameManager.Instance.RequestEquipMask(MaskType.Pyramid);
+
+        if (Keyboard.current.digit3Key.wasPressedThisFrame)
+            GameManager.Instance.RequestEquipMask(MaskType.Cube);
+
+        if (Keyboard.current.digit4Key.wasPressedThisFrame)
+            GameManager.Instance.RequestEquipMask(MaskType.Rock);
     }
 }

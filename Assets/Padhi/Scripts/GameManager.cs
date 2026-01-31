@@ -1,18 +1,22 @@
 using UnityEngine;
 using System;
 
-public class GameManager : MonoBehaviour
+public sealed class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("Player Stats")]
+    [Header("Player")]
+    [SerializeField] private MaskController playerMasks;
+
+    [Header("Health")]
     [SerializeField] private int maxHealth = 3;
     public int CurrentHealth { get; private set; }
 
-    public MaskType CurrentMask { get; private set; }
+    [Header("State")]
     public GameState CurrentState { get; private set; }
+    public MaskType CurrentMask { get; private set; } = MaskType.None;
 
-    // Events (Decoupling)
+    // Events
     public Action<int> OnHealthChanged;
     public Action<MaskType> OnMaskChanged;
     public Action<GameState> OnGameStateChanged;
@@ -27,59 +31,53 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        InitializeGame();
     }
 
-    private void InitializeGame()
+    private void Start()
     {
+        if (playerMasks == null)
+            playerMasks = FindFirstObjectByType<MaskController>();
+
         CurrentHealth = maxHealth;
-        CurrentMask = MaskType.None;
         SetGameState(GameState.Playing);
     }
 
-    /* ---------------- HEALTH ---------------- */
+    // ================= MASK API =================
+
+    /// <summary>
+    /// Called by UI or PlayerController (debug keys)
+    /// </summary>
+    public bool RequestEquipMask(MaskType id)
+    {
+        if (CurrentState != GameState.Playing) return false;
+        if (playerMasks == null) return false;
+
+        bool success = playerMasks.EquipIndex((int)id);
+        if (!success) return false;
+
+        CurrentMask = id;
+        OnMaskChanged?.Invoke(CurrentMask);
+        return true;
+    }
+
+    // ================= HEALTH =================
 
     public void TakeDamage(int amount)
     {
         if (CurrentState != GameState.Playing) return;
 
-        CurrentHealth -= amount;
-        CurrentHealth = Mathf.Clamp(CurrentHealth, 0, maxHealth);
+        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0, maxHealth);
         OnHealthChanged?.Invoke(CurrentHealth);
 
         if (CurrentHealth <= 0)
-        {
             SetGameState(GameState.GameOver);
-        }
     }
 
-    public void Heal(int amount)
+    // ================= STATE =================
+
+    public void SetGameState(GameState state)
     {
-        if (CurrentState != GameState.Playing) return;
-
-        CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0, maxHealth);
-        OnHealthChanged?.Invoke(CurrentHealth);
-    }
-
-    /* ---------------- MASK ---------------- */
-
-    public void EquipMask(MaskType newMask)
-    {
-        CurrentMask = newMask;
-        OnMaskChanged?.Invoke(CurrentMask);
-    }
-
-    public void ClearMask()
-    {
-        EquipMask(MaskType.None);
-    }
-
-    /* ---------------- GAME STATE ---------------- */
-
-    public void SetGameState(GameState newState)
-    {
-        CurrentState = newState;
+        CurrentState = state;
         OnGameStateChanged?.Invoke(CurrentState);
     }
 }
-    
