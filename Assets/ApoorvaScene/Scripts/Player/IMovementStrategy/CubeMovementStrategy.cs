@@ -1,10 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public sealed class CubeMovementStrategy : IMovementStrategy
 {
     public void OnEnter(PlayerMovement ctx)
     {
         ctx.SetRollVisualActive(false);
+        ctx.ClearWallStickState();
     }
 
     public void OnExit(PlayerMovement ctx)
@@ -16,9 +17,15 @@ public sealed class CubeMovementStrategy : IMovementStrategy
     {
         ctx.MoveHorizontalImmediate(dt);
 
-        // Wall stick only if airborne
-        if (!grounded)
+        if (grounded)
+        {
+            ctx.ClearWallStickState();
+        }
+        else
+        {
+            // ✅ pass dt (even if not used inside)
             ctx.HandleWallStick(dt);
+        }
 
         ctx.ApplyGravityOptimized(dt, grounded, allowStickOverride: true);
     }

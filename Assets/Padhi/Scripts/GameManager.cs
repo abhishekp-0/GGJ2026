@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 
 public sealed class GameManager : MonoBehaviour
@@ -38,8 +38,30 @@ public sealed class GameManager : MonoBehaviour
         if (playerMasks == null)
             playerMasks = FindFirstObjectByType<MaskController>();
 
+        if (playerMasks != null)
+        {
+            // ✅ keep GameManager synced with real equipped mask
+            playerMasks.OnMaskChanged += HandleMaskChanged;
+
+            // initialize CurrentMask if player already has a mask equipped
+            if (playerMasks.Current != null)
+                CurrentMask = playerMasks.Current.id;
+        }
+
         CurrentHealth = maxHealth;
         SetGameState(GameState.Playing);
+    }
+
+    private void OnDestroy()
+    {
+        if (playerMasks != null)
+            playerMasks.OnMaskChanged -= HandleMaskChanged;
+    }
+
+    private void HandleMaskChanged(MaskDefinition mask)
+    {
+        CurrentMask = (mask != null) ? mask.id : MaskType.None;
+        OnMaskChanged?.Invoke(CurrentMask);
     }
 
     // ================= MASK API =================
@@ -52,12 +74,9 @@ public sealed class GameManager : MonoBehaviour
         if (CurrentState != GameState.Playing) return false;
         if (playerMasks == null) return false;
 
-        bool success = playerMasks.EquipIndex((int)id);
-        if (!success) return false;
-
-        CurrentMask = id;
-        OnMaskChanged?.Invoke(CurrentMask);
-        return true;
+        // ✅ safer: equip by MaskType, not by index
+        bool success = playerMasks.EquipMask(id); // you add this method in MaskController
+        return success;
     }
 
     // ================= HEALTH =================

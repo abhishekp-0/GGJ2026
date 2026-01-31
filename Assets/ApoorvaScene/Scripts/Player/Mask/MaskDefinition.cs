@@ -15,7 +15,7 @@ public sealed class MaskDefinition : ScriptableObject
     public Sprite icon;
 
     [Header("Visual")]
-    public GameObject visualPrefab; // spawned under MaskVisual.visualRoot
+    public GameObject visualPrefab;
 
     [Header("Movement Modifiers")]
     public float speedMultiplier = 1f;
@@ -31,7 +31,7 @@ public sealed class MaskDefinition : ScriptableObject
     public GameObject colliderPrefab;
 
     [Header("Ability Flags (Jam-simple)")]
-    public bool enableBounce;       // Ball (also used for ball-momentum + roll)
+    public bool enableBounce;       // Ball mask identifier (keep)
     public bool enableAerialDash;   // Pyramid
     public bool enableWallStick;    // Cube
     public bool enableSmash;        // Rock
@@ -47,10 +47,7 @@ public sealed class MaskDefinition : ScriptableObject
         coyoteTime = 0.15f,
         jumpBufferTime = 0.1f,
         fallGravityMultiplier = 1.5f,
-        lowJumpGravityMultiplier = 2f,
-        enableLandingBounce = false,
-        bounceMinFallSpeed = 5f,
-        bounceVelocity = 10f
+        lowJumpGravityMultiplier = 2f
     };
 
     [System.Serializable]
@@ -62,10 +59,5 @@ public sealed class MaskDefinition : ScriptableObject
         public float jumpBufferTime;
         public float fallGravityMultiplier;
         public float lowJumpGravityMultiplier;
-
-        [Header("Ball Bounce (Optional Passive)")]
-        public bool enableLandingBounce;
-        public float bounceMinFallSpeed;
-        public float bounceVelocity;
     }
 }

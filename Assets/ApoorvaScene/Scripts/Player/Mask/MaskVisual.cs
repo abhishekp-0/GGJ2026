@@ -6,7 +6,8 @@ public sealed class MaskVisual : MonoBehaviour
 
     private GameObject current;
 
-    public Transform CurrentVisualTransform => current != null ? current.transform : null;
+    public Transform CurrentVisualTransform { get; private set; }
+    public Animator CurrentAnimator { get; private set; }
 
     private void Awake()
     {
@@ -18,14 +19,22 @@ public sealed class MaskVisual : MonoBehaviour
         if (current != null)
             Destroy(current);
 
+        CurrentVisualTransform = null;
+        CurrentAnimator = null;
+
         if (mask == null || mask.visualPrefab == null)
             return;
 
         current = Instantiate(mask.visualPrefab, visualRoot);
+        CurrentVisualTransform = current.transform;
+
         current.transform.localPosition = new Vector3(0f, 1f, 0f);
         current.transform.localRotation = Quaternion.identity;
         current.transform.localScale = Vector3.one;
 
-        Debug.Log($"Spawned visual: {current.name} under {visualRoot.name}");
+        // ✅ Find animator on spawned prefab (including children)
+        CurrentAnimator = current.GetComponentInChildren<Animator>(true);
+
+        Debug.Log($"Spawned visual: {current.name} | Animator = {(CurrentAnimator ? CurrentAnimator.name : "NONE")}");
     }
 }

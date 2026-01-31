@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "GGJ/Masks/Mask Library", fileName = "MaskLibrary")]
-public sealed class MaskLibrary : ScriptableObject
+public sealed class MaskLibrary: ScriptableObject
 {
     public MaskDefinition[] masks;
 

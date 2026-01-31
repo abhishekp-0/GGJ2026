@@ -14,15 +14,6 @@ public sealed class JumpStrategy_ConfigSO : ScriptableObject
     public float GetLowJumpMultiplier(MaskDefinition.JumpProfile profile)
         => Mathf.Max(1f, profile.lowJumpGravityMultiplier);
 
-    public bool ShouldBounceOnLanding(MaskDefinition.JumpProfile profile, float lastFrameFallSpeed)
-    {
-        if (!profile.enableLandingBounce) return false;
-        return lastFrameFallSpeed >= profile.bounceMinFallSpeed;
-    }
-
-    public float GetBounceVelocity(MaskDefinition.JumpProfile profile)
-        => profile.bounceVelocity;
-
     public float GetCoyoteTime(MaskDefinition.JumpProfile profile)
         => Mathf.Max(0f, profile.coyoteTime);
 

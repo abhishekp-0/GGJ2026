@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public sealed class MaskColliderApplier : MonoBehaviour
+public sealed class MaskColliderApplier: MonoBehaviour
 {
     [SerializeField] private Transform colliderRoot; // where extra collider prefab is spawned (optional)
 

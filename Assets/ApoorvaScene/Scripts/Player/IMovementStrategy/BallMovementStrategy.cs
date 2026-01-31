@@ -1,9 +1,8 @@
-using UnityEngine;
-
-public sealed class BallMovementStrategy : IMovementStrategy
+﻿public sealed class BallMovementStrategy : IMovementStrategy
 {
     public void OnEnter(PlayerMovement ctx)
     {
+        ctx.ClearWallStickState();     // safety if swapping from cube
         ctx.ResetHorizontalMomentum();
         ctx.SetRollVisualActive(true);
     }

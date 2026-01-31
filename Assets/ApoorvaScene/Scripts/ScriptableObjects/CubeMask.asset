@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 594113430b5267f45a88dbd3c3a1fab9, type: 3}
-  m_Name: Cube
+  m_Name: CubeMask
   m_EditorClassIdentifier: Assembly-CSharp::MaskDefinition
   id: 2
-  displayName: Cube
+  displayName: 'Cube '
   icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   visualPrefab: {fileID: 111561470042534639, guid: 60cfe51b0c3b9fb40bce0490709fc6ed, type: 3}
   speedMultiplier: 1
   gravityMultiplier: 1
   colliderMode: 0
-  controllerRadius: 0.5
-  controllerHeight: 0.5
-  controllerCenter: {x: 0, y: 1.37, z: 0}
+  controllerRadius: 0.25
+  controllerHeight: 0.9
+  controllerCenter: {x: 0, y: 1.2, z: 0}
   colliderPrefab: {fileID: 0}
   enableBounce: 0
   enableAerialDash: 0
@@ -31,10 +31,7 @@ MonoBehaviour:
   equipVfxPrefab: {fileID: 0}
   jump:
     jumpHeight: 1.5
-    coyoteTime: 0.16
-    jumpBufferTime: 0.12
-    fallGravityMultiplier: 1.25
-    lowJumpGravityMultiplier: 2.2
-    enableLandingBounce: 0
-    bounceMinFallSpeed: 5
-    bounceVelocity: 10
+    coyoteTime: 0.15
+    jumpBufferTime: 0.1
+    fallGravityMultiplier: 1.5
+    lowJumpGravityMultiplier: 2
