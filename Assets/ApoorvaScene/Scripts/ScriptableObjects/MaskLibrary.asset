@@ -15,3 +15,4 @@ MonoBehaviour:
   masks:
   - {fileID: 11400000, guid: 30c29d63608c76a499a3cd0a8693a9e8, type: 2}
   - {fileID: 11400000, guid: c1ec9483ca6753a418748ae8f6fae602, type: 2}
+  - {fileID: 11400000, guid: adfe910c96877f54aa66b88b72173aed, type: 2}

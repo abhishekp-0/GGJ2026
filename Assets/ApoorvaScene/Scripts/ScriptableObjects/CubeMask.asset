@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaskDefinition
   id: 2
   displayName: 'Cube '
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: 559278a6b30d4c844ad635a4133b1414, type: 3}
   visualPrefab: {fileID: 111561470042534639, guid: 60cfe51b0c3b9fb40bce0490709fc6ed, type: 3}
   speedMultiplier: 1
   gravityMultiplier: 1

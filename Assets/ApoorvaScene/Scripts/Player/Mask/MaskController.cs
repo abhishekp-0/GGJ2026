@@ -11,6 +11,7 @@ public sealed class MaskController : MonoBehaviour
     [SerializeField] private MaskVisual visual;
     [SerializeField] private MaskColliderApplier colliderApplier;
     [SerializeField] private PlayerMovement movement;
+    [SerializeField] private PlayerAnimationDriver animDriver;
 
     [Tooltip("Optional fallback mesh if mask.visualPrefab is null")]
     [SerializeField] private GameObject capsule;
@@ -25,16 +26,31 @@ public sealed class MaskController : MonoBehaviour
     [Header("Ball Spawn Rotation")]
     [SerializeField] private Vector3 ballSpawnEuler = new Vector3(0f, 180f, 0f);
 
+    [Header("Rock Spawn Transform")]
+    [SerializeField] private Vector3 rockSpawnEuler = Vector3.zero;
+    [SerializeField] private Vector3 rockSpawnScale = Vector3.one;
+
     public MaskDefinition Current { get; private set; }
     public int CurrentIndex { get; private set; }
 
     public event Action<MaskDefinition> OnMaskChanged;
+
+    private IMovementStrategy defaultStrategy;
+    private IMovementStrategy ballStrategy;
+    private IMovementStrategy cubeStrategy;
+    private IMovementStrategy rockStrategy;
 
     private void Awake()
     {
         if (visual == null) visual = GetComponentInChildren<MaskVisual>(true);
         if (colliderApplier == null) colliderApplier = GetComponent<MaskColliderApplier>();
         if (movement == null) movement = GetComponent<PlayerMovement>();
+        if (animDriver == null) animDriver = GetComponent<PlayerAnimationDriver>();
+
+        defaultStrategy = new DefaultMovementStrategy();
+        ballStrategy = new BallMovementStrategy();
+        cubeStrategy = new CubeMovementStrategy();
+        rockStrategy = new RockMovementStrategy();
     }
 
     private void Start()
@@ -51,7 +67,6 @@ public sealed class MaskController : MonoBehaviour
             return false;
         }
 
-        // clamp unlocks to library size
         unlockedCount = Mathf.Clamp(unlockedCount, 1, library.masks.Length);
 
         index = Mathf.Clamp(index, 0, library.masks.Length - 1);
@@ -71,9 +86,7 @@ public sealed class MaskController : MonoBehaviour
         Current = mask;
         CurrentIndex = index;
 
-        // Capsule fallback:
-        // If this mask has NO visual prefab => show capsule
-        // If it DOES => hide capsule
+        // Capsule fallback
         if (capsule != null)
             capsule.SetActive(mask.visualPrefab == null);
 
@@ -81,35 +94,40 @@ public sealed class MaskController : MonoBehaviour
         visual?.Apply(mask);
         colliderApplier?.Apply(mask);
 
-        // ✅ Ball facing direction (do after visual spawn)
+        // Animation wiring (driver owns animator)
+        if (animDriver != null)
+            animDriver.SetAnimator(visual != null ? visual.CurrentAnimator : null);
+
+        // Ball facing direction after visual spawn
         if (mask.enableBounce && visual != null && visual.CurrentVisualTransform != null)
         {
             visual.CurrentVisualTransform.localRotation = Quaternion.Euler(ballSpawnEuler);
         }
 
+        // ✅ Rock rotation + scale after visual spawn
+        if (mask.enableSmash && visual != null && visual.CurrentVisualTransform != null)
+        {
+            visual.CurrentVisualTransform.localRotation = Quaternion.Euler(rockSpawnEuler);
+            visual.CurrentVisualTransform.localScale = rockSpawnScale;
+        }
+
         if (movement != null)
         {
-            // Movement properties
             movement.SetSpeedMultiplier(mask.speedMultiplier);
             movement.SetGravityMultiplier(mask.gravityMultiplier);
             movement.SetJumpProfile(mask.jump);
 
-            // ✅ Animator hook (do after visual spawn)
-            // visual.CurrentAnimator should come from MaskVisual.Apply()
-            if (visual != null)
-                movement.SetAnimator(visual.CurrentAnimator);
-            else
-                movement.SetAnimator(null);
-
-            // Strategy selection
+            // Strategy selection (Ball > Cube > Rock > Default)
             if (mask.enableBounce)
-                movement.SetStrategy(new BallMovementStrategy());
+                movement.SetStrategy(ballStrategy);
             else if (mask.enableWallStick)
-                movement.SetStrategy(new CubeMovementStrategy());
+                movement.SetStrategy(cubeStrategy);
+            else if (mask.enableSmash)
+                movement.SetStrategy(rockStrategy);
             else
-                movement.SetStrategy(new DefaultMovementStrategy());
+                movement.SetStrategy(defaultStrategy);
 
-            // Roll target (ball rotation visual)
+            // Roll target (ball visual rotation)
             Transform rollTarget =
                 (visual != null && visual.CurrentVisualTransform != null)
                     ? visual.CurrentVisualTransform
@@ -117,9 +135,10 @@ public sealed class MaskController : MonoBehaviour
 
             movement.SetBallVisual(rollTarget);
 
-            // Optional: enable/disable ball landing bounce system if you have it in PlayerMovement
-            // If you don't have SetBallBounceActive(), remove this line.
+            // Mode toggles
             movement.SetBallBounceActive(mask.enableBounce);
+            movement.SetRockMode(mask.enableSmash);
+            movement.SetRockSmashActive(mask.enableSmash);
         }
 
         Debug.Log($"[MaskController] Equipped: {mask.displayName} ({mask.id}) index={index}");
@@ -127,7 +146,6 @@ public sealed class MaskController : MonoBehaviour
         return true;
     }
 
-    // ✅ Safer equip by type (prevents order mismatch bugs)
     public bool EquipMask(MaskType type)
     {
         if (library == null || library.masks == null) return false;
@@ -142,5 +160,4 @@ public sealed class MaskController : MonoBehaviour
         Debug.LogWarning($"[MaskController] No mask found for type: {type}");
         return false;
     }
-
 }

@@ -1,12 +1,11 @@
-using UnityEngine;
-
 public sealed class DefaultMovementStrategy : IMovementStrategy
 {
     public void OnEnter(PlayerMovement ctx)
     {
         ctx.SetRollVisualActive(false);
         ctx.SetBallBounceActive(false);
-        ctx.ClearWallStickState();
+        ctx.SetRockSmashActive(false);
+        ctx.SetRockMode(false);
     }
 
     public void OnExit(PlayerMovement ctx) { }

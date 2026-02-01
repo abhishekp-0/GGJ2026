@@ -1,11 +1,12 @@
-﻿using UnityEngine;
-
-public sealed class CubeMovementStrategy : IMovementStrategy
+﻿public sealed class CubeMovementStrategy : IMovementStrategy
 {
     public void OnEnter(PlayerMovement ctx)
     {
         ctx.SetRollVisualActive(false);
         ctx.SetBallBounceActive(false);
+        ctx.SetRockSmashActive(false);
+        ctx.SetRockMode(false);
+
         ctx.ClearWallStickState();
     }
 
@@ -18,10 +19,10 @@ public sealed class CubeMovementStrategy : IMovementStrategy
     {
         ctx.MoveHorizontalImmediate(dt);
 
-        if (grounded)
-            ctx.ClearWallStickState();
+        if (!grounded)
+            ctx.HandleWallStick(dt);
         else
-            ctx.HandleWallStick(dt);   // ✅ dt REQUIRED
+            ctx.ClearWallStickState();
 
         ctx.ApplyGravityOptimized(dt, grounded, allowStickOverride: true);
     }

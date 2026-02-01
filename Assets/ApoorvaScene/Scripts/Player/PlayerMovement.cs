@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using ApoorvaGame.Interfaces;
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class PlayerMovement : MonoBehaviour
@@ -52,6 +53,22 @@ public sealed class PlayerMovement : MonoBehaviour
     [SerializeField] private float ballBounceVelocity = 10f;
     [SerializeField] private float minAirborneTimeForBounce = 0.06f;
 
+    [Header("Rock (Heavy + Smash)")]
+    [SerializeField, Tooltip("Rock jump is reduced by this multiplier (0.35 to 0.6 is typical).")]
+    private float rockJumpHeightMultiplier = 0.45f;
+
+    [SerializeField, Tooltip("If fall speed abs >= this, landing triggers smash.")]
+    private float rockSmashMinFallSpeed = 12f;
+
+    [SerializeField, Tooltip("Radius of the smash effect at landing.")]
+    private float rockSmashRadius = 2.0f;
+
+    [SerializeField, Tooltip("Layers affected by smash (enemies, breakable ground, etc.)")]
+    private LayerMask rockSmashLayers;
+
+    [SerializeField, Tooltip("Optional upward impulse after smash (0 = none).")]
+    private float rockSmashRecoilUpVelocity = 0f;
+
     [Header("Animation")]
     [SerializeField] private bool playBallJumpAnimation = true;
     [SerializeField] private bool playLandAnimation = true;
@@ -91,24 +108,22 @@ public sealed class PlayerMovement : MonoBehaviour
 
     private IMovementStrategy currentStrategy;
 
-    // ===== Animation =====
-    private Animator currentAnimator;
-    private static readonly int AnimJump = Animator.StringToHash("Jump");
-    private static readonly int AnimLand = Animator.StringToHash("Land");
-
-    private bool warnedMissingJump;
-    private bool warnedMissingLand;
-
     // ===== Ball bounce runtime =====
     private bool ballBounceActive;
     private bool ballBounceConsumedThisLanding;
     private float ballAirborneTimer;
     private float ballMaxFallSpeedAbs;
 
-    // ===== Events =====
+    // ===== Rock runtime =====
+    private bool rockMode;
+    private bool rockSmashActive;
+    private float rockMaxFallSpeedAbs;
+    private bool rockSmashConsumedThisLanding;
+
+    // ===== Events (for separate animation system / VFX / SFX) =====
     public event Action OnJump;
     public event Action OnLand;
-    public event Action<Animator> OnAnimatorChanged;
+    public event Action<float> OnRockSmash; // impact speed
 
     private void Awake()
     {
@@ -129,21 +144,6 @@ public sealed class PlayerMovement : MonoBehaviour
 
     public void SetBallVisual(Transform t) => ballVisual = t;
 
-    public void SetAnimator(Animator anim)
-    {
-        currentAnimator = anim;
-        warnedMissingJump = false;
-        warnedMissingLand = false;
-
-        OnAnimatorChanged?.Invoke(anim);
-
-        if (debugLogs)
-        {
-            string name = currentAnimator != null ? currentAnimator.gameObject.name : "NULL";
-            Debug.Log($"[PlayerMovement] Animator set to: {name}");
-        }
-    }
-
     public void SetStrategy(IMovementStrategy strategy)
     {
         if (ReferenceEquals(currentStrategy, strategy)) return;
@@ -154,6 +154,41 @@ public sealed class PlayerMovement : MonoBehaviour
 
         if (debugLogs)
             Debug.Log($"[PlayerMovement] Strategy set to {currentStrategy?.GetType().Name}");
+    }
+
+    // -------- Mode toggles from MaskController --------
+    public void SetBallBounceActive(bool active)
+    {
+        ballBounceActive = active;
+
+        if (!ballBounceActive)
+        {
+            ballBounceConsumedThisLanding = false;
+            ballAirborneTimer = 0f;
+            ballMaxFallSpeedAbs = 0f;
+        }
+    }
+
+    public void SetRockMode(bool active)
+    {
+        rockMode = active;
+
+        if (!rockMode)
+        {
+            rockMaxFallSpeedAbs = 0f;
+            rockSmashConsumedThisLanding = false;
+        }
+    }
+
+    public void SetRockSmashActive(bool active)
+    {
+        rockSmashActive = active;
+
+        if (!rockSmashActive)
+        {
+            rockMaxFallSpeedAbs = 0f;
+            rockSmashConsumedThisLanding = false;
+        }
     }
 
     // ================== Jump input (space down/up) ==================
@@ -195,7 +230,6 @@ public sealed class PlayerMovement : MonoBehaviour
         // Strategy tick
         currentStrategy?.Tick(this, dt, grounded);
 
-        // Landing event + optional animator trigger
         bool justLanded = grounded && !wasGrounded;
         if (justLanded)
         {
@@ -252,7 +286,6 @@ public sealed class PlayerMovement : MonoBehaviour
 
         float radiansPerSec = currentVelX / ballRollRadius;
         float degrees = radiansPerSec * Mathf.Rad2Deg * dt;
-
         ballVisual.Rotate(0f, 0f, -degrees, Space.Self);
     }
 
@@ -271,9 +304,16 @@ public sealed class PlayerMovement : MonoBehaviour
     {
         float g = Mathf.Max(0.01f, baseGravityMagnitude);
 
+        // Normal jump height from profile
+        float jumpHeight = Mathf.Max(0.01f, currentJumpProfile.jumpHeight);
+
+        // ✅ Rock is heavy: reduce jump height
+        if (rockMode)
+            jumpHeight *= rockJumpHeightMultiplier;
+
         float v0 = (jumpStrategy != null)
-            ? jumpStrategy.GetJumpVelocity(currentJumpProfile, g)
-            : Mathf.Sqrt(2f * g * Mathf.Max(0.01f, currentJumpProfile.jumpHeight));
+            ? Mathf.Sqrt(2f * g * jumpHeight)
+            : Mathf.Sqrt(2f * g * jumpHeight);
 
         velocity.y = v0;
 
@@ -281,7 +321,7 @@ public sealed class PlayerMovement : MonoBehaviour
             OnJump?.Invoke();
 
         if (debugLogs)
-            Debug.Log($"[PlayerMovement] Jump -> v0={velocity.y:0.00}");
+            Debug.Log($"[PlayerMovement] Jump -> v0={velocity.y:0.00} (rockMode={rockMode})");
     }
 
     public void ApplyGravityOptimized(float dt, bool grounded, bool allowStickOverride = false)
@@ -290,7 +330,7 @@ public sealed class PlayerMovement : MonoBehaviour
         if (grounded && velocity.y < 0f)
             velocity.y = -2f;
 
-        // wall stick override: we already manage falling while sticking
+        // wall stick override
         if (allowStickOverride && isSticking)
         {
             controller.Move(velocity * dt);
@@ -313,18 +353,6 @@ public sealed class PlayerMovement : MonoBehaviour
     }
 
     // ================== Ball Landing Bounce (Ball Only) ==================
-    public void SetBallBounceActive(bool active)
-    {
-        ballBounceActive = active;
-
-        if (!ballBounceActive)
-        {
-            ballBounceConsumedThisLanding = false;
-            ballAirborneTimer = 0f;
-            ballMaxFallSpeedAbs = 0f;
-        }
-    }
-
     public void UpdateBallLandingBounce(float dt, bool grounded)
     {
         if (!ballBounceActive) return;
@@ -370,6 +398,79 @@ public sealed class PlayerMovement : MonoBehaviour
         }
     }
 
+    // ================== Rock Smash (Rock Only) ==================
+    public void UpdateRockSmash(float dt, bool grounded)
+    {
+        if (!rockSmashActive) return;
+
+        bool justLanded = grounded && !wasGrounded;
+
+        if (!grounded)
+        {
+            if (wasGrounded)
+            {
+                rockMaxFallSpeedAbs = 0f;
+                rockSmashConsumedThisLanding = false;
+            }
+
+            if (velocity.y < 0f)
+            {
+                float fallAbs = Mathf.Abs(velocity.y);
+                if (fallAbs > rockMaxFallSpeedAbs)
+                    rockMaxFallSpeedAbs = fallAbs;
+            }
+
+            return;
+        }
+
+        if (justLanded && !rockSmashConsumedThisLanding)
+        {
+            if (rockMaxFallSpeedAbs >= rockSmashMinFallSpeed)
+            {
+                rockSmashConsumedThisLanding = true;
+
+                if (debugLogs)
+                    Debug.Log($"[RockSmash] IMPACT! fall={rockMaxFallSpeedAbs:0.00}");
+
+                TriggerRockSmash(rockMaxFallSpeedAbs);
+
+                if (rockSmashRecoilUpVelocity > 0f)
+                    velocity.y = rockSmashRecoilUpVelocity;
+            }
+
+            rockMaxFallSpeedAbs = 0f;
+        }
+    }
+
+    private void TriggerRockSmash(float impactSpeedAbs)
+    {
+        OnRockSmash?.Invoke(impactSpeedAbs);
+
+        // Smash origin near feet
+        Vector3 feet = transform.position + controller.center;
+        feet.y -= (controller.height * 0.5f - controller.radius);
+
+        Collider[] hits = Physics.OverlapSphere(
+            feet,
+            rockSmashRadius,
+            rockSmashLayers,
+            QueryTriggerInteraction.Ignore
+        );
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i] == null) continue;
+
+            // Optional: enemy damage hook
+            if (hits[i].TryGetComponent<IDamageable>(out var dmg))
+                dmg.TakeDamage(1);
+
+            // Optional: breakable ground hook
+            if (hits[i].TryGetComponent<IBreakable>(out var br))
+                br.Break();
+        }
+    }
+
     // ================== Wall Stick Helpers (Cube Strategy) ==================
     public void ClearWallStickState()
     {
@@ -378,12 +479,10 @@ public sealed class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// ✅ Vertical walls only + friction.
-    /// Call from CubeMovementStrategy when airborne.
+    /// Vertical walls only + friction. Call from CubeMovementStrategy when airborne.
     /// </summary>
     public void HandleWallStick(float dt)
     {
-        // Must be airborne to stick
         if (controller.isGrounded)
         {
             ClearWallStickState();
@@ -393,7 +492,6 @@ public sealed class PlayerMovement : MonoBehaviour
         bool pushingLeft = moveInput.x < -0.1f;
         bool pushingRight = moveInput.x > 0.1f;
 
-        // Only stick when player is pushing into a wall
         if (!pushingLeft && !pushingRight)
         {
             ClearWallStickState();
@@ -412,15 +510,14 @@ public sealed class PlayerMovement : MonoBehaviour
                 return;
             }
 
-            // ✅ STICK ON
             isSticking = true;
             wallSide = side;
 
-            // Small push into the wall to keep stable contact
+            // small push into wall to keep contact stable
             float pushX = -hit.normal.x * wallStickPush;
             controller.Move(new Vector3(pushX, 0f, 0f) * dt);
 
-            // "Friction": resist sliding down
+            // friction against sliding
             if (hardStick)
             {
                 if (velocity.y < 0f)
@@ -440,10 +537,6 @@ public sealed class PlayerMovement : MonoBehaviour
         ClearWallStickState();
     }
 
-    /// <summary>
-    /// ✅ Left/Right raycasts and ONLY accepts vertical-ish walls.
-    /// Floors/slopes are rejected using the normal.y filter.
-    /// </summary>
     private bool CheckWall(out int side, out RaycastHit hit)
     {
         side = 0;
@@ -452,7 +545,6 @@ public sealed class PlayerMovement : MonoBehaviour
         Vector3 origin = transform.position + controller.center;
         float dist = Mathf.Max(wallCheckDistance, controller.radius + 0.05f);
 
-        // Left
         if (Physics.Raycast(origin, Vector3.left, out RaycastHit leftHit, dist, wallLayers, QueryTriggerInteraction.Ignore))
         {
             if (Mathf.Abs(leftHit.normal.y) <= maxWallNormalY)
@@ -463,7 +555,6 @@ public sealed class PlayerMovement : MonoBehaviour
             }
         }
 
-        // Right
         if (Physics.Raycast(origin, Vector3.right, out RaycastHit rightHit, dist, wallLayers, QueryTriggerInteraction.Ignore))
         {
             if (Mathf.Abs(rightHit.normal.y) <= maxWallNormalY)
@@ -489,3 +580,7 @@ public sealed class PlayerMovement : MonoBehaviour
         coyoteTimer = 0f;
     }
 }
+
+// Optional simple interfaces (put in their own file if you want)
+public interface IDamageable { void TakeDamage(int amount); }
+public interface IBreakable { void Break(); }

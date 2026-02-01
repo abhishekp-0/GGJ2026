@@ -1,13 +1,14 @@
-﻿using UnityEngine;
-
-public sealed class BallMovementStrategy : IMovementStrategy
+﻿public sealed class BallMovementStrategy : IMovementStrategy
 {
     public void OnEnter(PlayerMovement ctx)
     {
         ctx.ResetHorizontalMomentum();
         ctx.SetRollVisualActive(true);
         ctx.SetBallBounceActive(true);
-        ctx.ClearWallStickState();
+
+        // not rock
+        ctx.SetRockSmashActive(false);
+        ctx.SetRockMode(false);
     }
 
     public void OnExit(PlayerMovement ctx)
@@ -20,11 +21,10 @@ public sealed class BallMovementStrategy : IMovementStrategy
     {
         ctx.MoveHorizontalBallMomentum(dt);
 
-        // ✅ bounce logic only for ball, and only when active
+        // bounce decision BEFORE gravity
         ctx.UpdateBallLandingBounce(dt, grounded);
 
         ctx.ApplyGravityOptimized(dt, grounded);
-
         ctx.ApplyBallRollVisual(dt);
     }
 }

@@ -164,6 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaskVisual
   visualRoot: {fileID: 186005665}
+  debugLogs: 0
 --- !u!1 &587711114
 GameObject:
   m_ObjectHideFlags: 0
@@ -556,13 +557,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -3283254025265858118, guid: ba4b834b989c09d4f96d2b2c23b0b76d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 382641347053466386, guid: ba4b834b989c09d4f96d2b2c23b0b76d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 996585681}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ba4b834b989c09d4f96d2b2c23b0b76d, type: 3}
 --- !u!4 &869948522 stripped
 Transform:
@@ -574,28 +573,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 382641347053466386, guid: ba4b834b989c09d4f96d2b2c23b0b76d, type: 3}
   m_PrefabInstance: {fileID: 869948521}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &996585681
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996585680}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 18e87f97ad4b8c241a24c170024c33cb, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1389881850
 GameObject:
   m_ObjectHideFlags: 0
@@ -817,6 +794,13 @@ MonoBehaviour:
   ballBounceMinFallSpeed: 6
   ballBounceVelocity: 10
   minAirborneTimeForBounce: 0.06
+  rockJumpHeightMultiplier: 0.45
+  rockSmashMinFallSpeed: 12
+  rockSmashRadius: 2
+  rockSmashLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  rockSmashRecoilUpVelocity: 0
   playBallJumpAnimation: 1
   playLandAnimation: 0
   debugLogs: 0
@@ -909,10 +893,13 @@ MonoBehaviour:
   visual: {fileID: 186005666}
   colliderApplier: {fileID: 1535017505}
   movement: {fileID: 1535017501}
+  animDriver: {fileID: 1535017507}
   capsule: {fileID: 996585680}
   unlockedCount: 4
   equipOnStart: 1
   ballSpawnEuler: {x: 0, y: 180, z: 0}
+  rockSpawnEuler: {x: -90, y: 180, z: 0}
+  rockSpawnScale: {x: 2, y: 1, z: 1}
 --- !u!114 &1535017507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -926,6 +913,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationDriver
   movement: {fileID: 1535017501}
+  animator: {fileID: 0}
   debugLogs: 1
 --- !u!95 &1535017508
 Animator:
@@ -1201,6 +1189,7 @@ GameObject:
   - component: {fileID: 6351274869414498707}
   - component: {fileID: 1625408530181931859}
   - component: {fileID: 6949953674864386741}
+  - component: {fileID: 7047986531487749183}
   m_Layer: 5
   m_Name: Mask1
   m_TagString: Untagged
@@ -1252,7 +1241,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 7047986531487749183}
         m_TargetAssemblyTypeName: MaskUIButton_ByDefinition, Assembly-CSharp
         m_MethodName: OnClicked
         m_Mode: 1
@@ -1684,6 +1673,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 944703617387919509}
   m_CullTransparentMesh: 1
+--- !u!114 &7047986531487749183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944703617387919509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a83fc23ae087b0a4f8d406f5b1d14bc2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaskUIButton_ByDefinition
+  maskDefinition: {fileID: 11400000, guid: adfe910c96877f54aa66b88b72173aed, type: 2}
+  autoBind: 1
 --- !u!223 &7049987799412419789
 Canvas:
   m_ObjectHideFlags: 0

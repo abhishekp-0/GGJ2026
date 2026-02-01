@@ -4,10 +4,15 @@ public sealed class MaskVisual : MonoBehaviour
 {
     [SerializeField] private Transform visualRoot;
 
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = false;
+
     private GameObject current;
 
     public Transform CurrentVisualTransform { get; private set; }
     public Animator CurrentAnimator { get; private set; }
+
+    private static readonly Vector3 SpawnLocalPos = new Vector3(0f, 1f, 0f);
 
     private void Awake()
     {
@@ -17,7 +22,10 @@ public sealed class MaskVisual : MonoBehaviour
     public void Apply(MaskDefinition mask)
     {
         if (current != null)
+        {
             Destroy(current);
+            current = null;
+        }
 
         CurrentVisualTransform = null;
         CurrentAnimator = null;
@@ -28,13 +36,14 @@ public sealed class MaskVisual : MonoBehaviour
         current = Instantiate(mask.visualPrefab, visualRoot);
         CurrentVisualTransform = current.transform;
 
-        current.transform.localPosition = new Vector3(0f, 1f, 0f);
-        current.transform.localRotation = Quaternion.identity;
-        current.transform.localScale = Vector3.one;
+        CurrentVisualTransform.localPosition = SpawnLocalPos;
+        CurrentVisualTransform.localRotation = Quaternion.identity;
+        CurrentVisualTransform.localScale = Vector3.one;
 
-        // ✅ Find animator on spawned prefab (including children)
+        // ✅ Animator could be on root or children
         CurrentAnimator = current.GetComponentInChildren<Animator>(true);
 
-        Debug.Log($"Spawned visual: {current.name} | Animator = {(CurrentAnimator ? CurrentAnimator.name : "NONE")}");
+        if (debugLogs)
+            Debug.Log($"[MaskVisual] Spawned: {current.name} | Animator={(CurrentAnimator ? CurrentAnimator.name : "NONE")}");
     }
 }
